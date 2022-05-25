@@ -6,6 +6,7 @@ using CodingEventsDemo.Data;
 using CodingEventsDemo.Models;
 using CodingEventsDemo.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -24,14 +25,21 @@ namespace coding_events_practice.Controllers
         // GET: /<controller>/
         public IActionResult Index()
         {
-            List<Event> events = context.Events.ToList();
+            // how the vid displays using 3 seperate lines of code:
+            List<Event> events = context.Events
+                .Include(e => e.Category)
+                .ToList();
+            // prob ok like this too maybe? looks ok - no red squigglies
+            // List<Event> events = context.Events.Include(e => e.Category).ToList();  
+            // yes indeed. it shows up in the text!
 
             return View(events);
         }
 
         public IActionResult Add()
         {
-            AddEventViewModel addEventViewModel = new AddEventViewModel();
+            List<EventCategory> categories = context.Categories.ToList();
+            AddEventViewModel addEventViewModel = new AddEventViewModel(categories);
 
             return View(addEventViewModel);
         }
@@ -41,12 +49,13 @@ namespace coding_events_practice.Controllers
         {
             if (ModelState.IsValid)
             {
+                EventCategory theCategory = context.Categories.Find(addEventViewModel.CategoryId);
                 Event newEvent = new Event
                 {
                     Name = addEventViewModel.Name,
                     Description = addEventViewModel.Description,
                     ContactEmail = addEventViewModel.ContactEmail,
-                    Type = addEventViewModel.Type
+                    Category = theCategory
                 };
 
                 context.Events.Add(newEvent);
